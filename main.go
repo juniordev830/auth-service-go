@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -13,8 +14,13 @@ type TokenClaim struct {
 }
 
 func GenerateToken(userID string, role string) (TokenClaim, error) {
+	userID = strings.TrimSpace(userID)
+	role = strings.ToLower(strings.TrimSpace(role))
 	if userID == "" {
 		return TokenClaim{}, errors.New("userID cannot be empty")
+	}
+	if role != "user" && role != "admin" {
+		return TokenClaim{}, errors.New("role must be either user or admin")
 	}
 
 	return TokenClaim{
@@ -25,7 +31,11 @@ func GenerateToken(userID string, role string) (TokenClaim, error) {
 }
 
 func ValidateToken(claim TokenClaim) bool {
-	if claim.UserID == "" {
+	if strings.TrimSpace(claim.UserID) == "" {
+		return false
+	}
+	role := strings.ToLower(strings.TrimSpace(claim.Role))
+	if role != "user" && role != "admin" {
 		return false
 	}
 	return time.Now().Before(claim.ExpiresAt)
