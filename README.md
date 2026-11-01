@@ -1,44 +1,28 @@
 # Auth Service Go
 
-Pequeno projeto educacional em Go para modelar claims de autenticação, gerar uma estrutura com identificador de usuário, papel e expiração, e verificar se a estrutura ainda está válida.
+Biblioteca educacional em Go para emitir e verificar tokens JWT assinados com HMAC-SHA256 (HS256), além de validar claims em memória.
 
-> **Importante:** a implementação atual não assina nem verifica JWT criptográfico e não expõe um servidor HTTP. Ela é um exercício de lógica de expiração, não deve ser usada como serviço de autenticação real.
+## Segurança
 
-## Tecnologias
-
-- Go
-- Biblioteca padrão
-- Testes com `go test`
-
-## Requisitos
-
-Instale uma versão do Go compatível com o `go.mod`.
+- `GenerateJWT` e `VerifyJWT` exigem um segredo com pelo menos 32 bytes.
+- A verificação confere a assinatura em tempo constante, algoritmo, tipo, emissor, audiência, papel, usuário, horário de emissão e expiração.
+- Os papéis permitidos são `user` e `admin`; não confie em papéis enviados diretamente pelo cliente.
+- Forneça o segredo por variável de ambiente/gerenciador de segredos; nunca o versiona no repositório.
+- O repositório ainda não fornece login, armazenamento de usuários, refresh tokens nem servidor HTTP. Não é um serviço de autenticação completo até esses componentes serem implementados.
 
 ## Executar
 
 ```bash
+go test ./...
 go run .
 ```
 
-## Testes
+## Exemplo de uso como biblioteca
 
-```bash
-go test ./...
+```go
+secret := os.Getenv("JWT_SECRET")
+token, err := GenerateJWT("user-123", "user", secret)
+claims, err := VerifyJWT(token, secret)
 ```
 
-## Conceitos praticados
-
-- Estruturas tipadas (`TokenClaim`)
-- Validação de argumentos
-- Expiração baseada em tempo
-- Separação entre geração e validação
-- Testes automatizados
-
-## Limitações e próximos passos
-
-- Implementar assinatura e verificação JWT com uma biblioteca mantida, incluindo validação de issuer, audience e algoritmo.
-- Adicionar handlers HTTP e validação de entrada se a intenção for criar uma API.
-- Validar papéis por allowlist e não confiar em papéis enviados pelo cliente.
-- Adicionar testes para token expirado, usuário vazio e papel inválido.
-
-Não utilize os claims atuais para proteger recursos reais.
+O exemplo é ilustrativo; trate erros e não exponha tokens em logs.
