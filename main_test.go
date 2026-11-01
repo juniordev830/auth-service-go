@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"strings"
 	"testing"
 	"time"
 )
@@ -76,4 +78,39 @@ func TestValidateTokenRejectsUnknownRole(t *testing.T) {
     if ValidateToken(token) {
         t.Fatal("expected unsupported role to be invalid")
     }
+}
+
+
+func TestSignedJWTRoundTrip(t *testing.T) {
+	secret := "0123456789abcdef0123456789abcdef"
+	token, err := GenerateJWT(" usr_123 ", " ADMIN ", secret)
+	if err != nil {
+		t.Fatalf("GenerateJWT failed: %v", err)
+	}
+	claim, err := VerifyJWT(token, secret)
+	if err != nil {
+		t.Fatalf("VerifyJWT failed: %v", err)
+	}
+	if claim.UserID != "usr_123" || claim.Role != "admin" || time.Until(claim.ExpiresAt) <= 0 {
+		t.Fatalf("unexpected verified claims: %#v", claim)
+	}
+}
+
+func TestSignedJWTRejectsTampering(t *testing.T) {
+	secret := "0123456789abcdef0123456789abcdef"
+	token, err := GenerateJWT("usr_123", "user", secret)
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := strings.Split(token, ".")
+	parts[1] = base64.RawURLEncoding.EncodeToString([]byte(`{"sub":"attacker","role":"admin","exp":9999999999,"iat":1,"iss":"auth-service-go","aud":"portfolio-api"}`))
+	if _, err := VerifyJWT(strings.Join(parts, "."), secret); err == nil {
+		t.Fatal("expected tampered token to be rejected")
+	}
+}
+
+func TestSignedJWTRequiresStrongSecret(t *testing.T) {
+	if _, err := GenerateJWT("usr_123", "user", "short"); err == nil {
+		t.Fatal("expected short secret to be rejected")
+	}
 }
