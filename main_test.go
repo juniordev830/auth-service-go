@@ -114,3 +114,11 @@ func TestSignedJWTRequiresStrongSecret(t *testing.T) {
 		t.Fatal("expected short secret to be rejected")
 	}
 }
+
+func TestVerifyJWTRejectsOversizedToken(t *testing.T) {
+	secret := "0123456789abcdef0123456789abcdef"
+	token := strings.Repeat("a", maximumJWTBytes+1)
+	if _, err := VerifyJWT(token, secret); err == nil {
+		t.Fatal("expected oversized token to be rejected")
+	}
+}
