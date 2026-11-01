@@ -1,36 +1,44 @@
 # Auth Service Go
 
-High-performance Authentication and Authorization microservice written in Go (Golang). Demonstrates clean concurrency patterns and JWT token verification.
+Pequeno projeto educacional em Go para modelar claims de autenticação, gerar uma estrutura com identificador de usuário, papel e expiração, e verificar se a estrutura ainda está válida.
 
-## 🚀 Features
+> **Importante:** a implementação atual não assina nem verifica JWT criptográfico e não expõe um servidor HTTP. Ela é um exercício de lógica de expiração, não deve ser usada como serviço de autenticação real.
 
-- **Go (Golang)**: Blazing fast execution and low memory footprint.
-- **JWT Authentication**: Token creation and validation routines.
-- **RESTful Endpoints**: Clean standard library HTTP handler patterns.
+## Tecnologias
 
-## 🛠️ Tech Stack
+- Go
+- Biblioteca padrão
+- Testes com `go test`
 
-- **Language**: Go 1.20+
-- **Protocol**: HTTP / REST
+## Requisitos
 
-## 📦 Getting Started
+Instale uma versão do Go compatível com o `go.mod`.
 
-### Prerequisites
-- Go >= 1.20
-
-### Running the application
+## Executar
 
 ```bash
-# Clone repository
-git clone https://github.com/YOUR_USERNAME/auth-service-go.git
-
-# Navigate to project
-cd auth-service-go
-
-# Run application
-go run main.go
+go run .
 ```
 
-## 📜 License
+## Testes
 
-This project is licensed under the MIT License.
+```bash
+go test ./...
+```
+
+## Conceitos praticados
+
+- Estruturas tipadas (`TokenClaim`)
+- Validação de argumentos
+- Expiração baseada em tempo
+- Separação entre geração e validação
+- Testes automatizados
+
+## Limitações e próximos passos
+
+- Implementar assinatura e verificação JWT com uma biblioteca mantida, incluindo validação de issuer, audience e algoritmo.
+- Adicionar handlers HTTP e validação de entrada se a intenção for criar uma API.
+- Validar papéis por allowlist e não confiar em papéis enviados pelo cliente.
+- Adicionar testes para token expirado, usuário vazio e papel inválido.
+
+Não utilize os claims atuais para proteger recursos reais.
