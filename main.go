@@ -15,6 +15,7 @@ const jwtIssuer = "auth-service-go"
 const jwtAudience = "portfolio-api"
 const jwtLifetime = 24 * time.Hour
 const minimumSecretBytes = 32
+const maximumJWTBytes = 16 * 1024
 
 type TokenClaim struct {
 	UserID    string    `json:"user_id"`
@@ -88,6 +89,9 @@ func GenerateJWT(userID, role, secret string) (string, error) {
 // VerifyJWT verifies the signature before trusting claims and validates the
 // algorithm, issuer, audience, role, subject, issue time, and expiry.
 func VerifyJWT(token, secret string) (TokenClaim, error) {
+	if len(token) > maximumJWTBytes {
+		return TokenClaim{}, errors.New("JWT exceeds maximum allowed size")
+	}
 	if err := validateSecret(secret); err != nil {
 		return TokenClaim{}, err
 	}
