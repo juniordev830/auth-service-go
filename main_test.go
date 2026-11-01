@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/base64"
 	"strings"
 	"testing"
@@ -121,5 +123,31 @@ func TestVerifyJWTRejectsOversizedToken(t *testing.T) {
 	token := strings.Repeat("a", maximumTokenBytes+1)
 	if _, err := VerifyJWT(token, secret); err == nil {
 		t.Fatal("expected oversized JWT to be rejected")
+	}
+}
+
+
+func TestSignedJWTRejectsWrongSecret(t *testing.T) {
+	secret := "0123456789abcdef0123456789abcdef"
+	token, err := GenerateJWT("usr_123", "user", secret)
+	if err != nil { t.Fatal(err) }
+	if _, err := VerifyJWT(token, "abcdef0123456789abcdef0123456789"); err == nil {
+		t.Fatal("expected token signed with another secret to be rejected")
+	}
+}
+
+func TestSignedJWTRejectsFutureIssuedAt(t *testing.T) {
+	secret := "0123456789abcdef0123456789abcdef"
+	token, err := GenerateJWT("usr_123", "user", secret)
+	if err != nil { t.Fatal(err) }
+	parts := strings.Split(token, ".")
+	payload := `{"sub":"usr_123","role":"user","exp":4102444800,"iat":4102444740,"iss":"auth-service-go","aud":"portfolio-api"}`
+	parts[1] = base64.RawURLEncoding.EncodeToString([]byte(payload))
+	unsigned := parts[0] + "." + parts[1]
+	mac := hmac.New(sha256.New, []byte(secret))
+	_, _ = mac.Write([]byte(unsigned))
+	parts[2] = base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+	if _, err := VerifyJWT(strings.Join(parts, "."), secret); err == nil {
+		t.Fatal("expected JWT with future iat to be rejected")
 	}
 }
