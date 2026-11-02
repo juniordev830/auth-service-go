@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "project_kind": "Biblioteca de tokens JWT Go",
+  "entry_points": [
+    "main.go",
+    "main_test.go"
+  ],
+  "test_commands": [
+    "go test ./...",
+    "go vet ./..."
+  ],
+  "review_focus": [
+    "Validação de assinatura, expiração e claims",
+    "Segredos fortes e algoritmos permitidos"
+  ]
+}
