@@ -147,7 +147,7 @@ func VerifyJWT(token, secret string) (TokenClaim, error) {
 
 // ValidateToken validates an in-memory claim only; it does not verify a JWT.
 func ValidateToken(claim TokenClaim) bool {
-	if strings.TrimSpace(claim.UserID) == "" {
+	if strings.TrimSpace(claim.UserID) == "" || len([]byte(claim.UserID)) > maximumUserIDBytes {
 		return false
 	}
 	role := strings.ToLower(strings.TrimSpace(claim.Role))
