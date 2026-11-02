@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -149,5 +150,59 @@ func TestSignedJWTRejectsFutureIssuedAt(t *testing.T) {
 	parts[2] = base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 	if _, err := VerifyJWT(strings.Join(parts, "."), secret); err == nil {
 		t.Fatal("expected JWT with future iat to be rejected")
+	}
+}
+
+func TestVerifyJWTRejectsInvalidSignedClaims(t *testing.T) {
+	secret := "0123456789abcdef0123456789abcdef"
+	validToken, err := GenerateJWT("usr_123", "user", secret)
+	if err != nil {
+		t.Fatal(err)
+	}
+	header := strings.Split(validToken, ".")[0]
+	now := time.Now().UTC().Unix()
+
+	tests := []struct {
+		name    string
+		payload string
+	}{
+		{
+			name:    "empty subject",
+			payload: `{"sub":" ","role":"user","exp":4102444800,"iat":` + fmt.Sprint(now) + `, "iss":"auth-service-go","aud":"portfolio-api"}`,
+		},
+		{
+			name:    "unsupported role",
+			payload: `{"sub":"usr_123","role":"root","exp":4102444800,"iat":` + fmt.Sprint(now) + `, "iss":"auth-service-go","aud":"portfolio-api"}`,
+		},
+		{
+			name:    "wrong issuer",
+			payload: `{"sub":"usr_123","role":"user","exp":4102444800,"iat":` + fmt.Sprint(now) + `, "iss":"other-service","aud":"portfolio-api"}`,
+		},
+		{
+			name:    "wrong audience",
+			payload: `{"sub":"usr_123","role":"user","exp":4102444800,"iat":` + fmt.Sprint(now) + `, "iss":"auth-service-go","aud":"other-api"}`,
+		},
+		{
+			name:    "expiry not after issue time",
+			payload: `{"sub":"usr_123","role":"user","exp":` + fmt.Sprint(now+3600) + `,"iat":` + fmt.Sprint(now+3600) + `,"iss":"auth-service-go","aud":"portfolio-api"}`,
+		},
+		{
+			name:    "lifetime exceeds configured maximum",
+			payload: `{"sub":"usr_123","role":"user","exp":` + fmt.Sprint(now+int64(jwtLifetime.Seconds())+3600) + `,"iat":` + fmt.Sprint(now) + `,"iss":"auth-service-go","aud":"portfolio-api"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			payload := base64.RawURLEncoding.EncodeToString([]byte(tt.payload))
+			unsigned := header + "." + payload
+			mac := hmac.New(sha256.New, []byte(secret))
+			_, _ = mac.Write([]byte(unsigned))
+			token := unsigned + "." + base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+
+			if _, err := VerifyJWT(token, secret); err == nil {
+				t.Fatal("expected invalid claims to be rejected")
+			}
+		})
 	}
 }
