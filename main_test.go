@@ -151,3 +151,29 @@ func TestSignedJWTRejectsFutureIssuedAt(t *testing.T) {
 		t.Fatal("expected JWT with future iat to be rejected")
 	}
 }
+
+func TestVerifyJWTRejectsMalformedInputs(t *testing.T) {
+	secret := "0123456789abcdef0123456789abcdef"
+	tests := []struct {
+		name  string
+		token string
+	}{
+		{name: "missing segments", token: "only-one-segment"},
+		{name: "invalid header encoding", token: "%%% .e30.signature"},
+		{
+			name: "unsupported algorithm",
+			token: base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"none","typ":"JWT"}`)) + ".e30.signature",
+		},
+		{
+			name: "wrong token type",
+			token: base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"NOT-JWT"}`)) + ".e30.signature",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if _, err := VerifyJWT(test.token, secret); err == nil {
+				t.Fatal("expected malformed or unsupported JWT to be rejected")
+			}
+		})
+	}
+}
