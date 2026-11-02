@@ -28,7 +28,8 @@ A biblioteca exige:
 - algoritmo `HS256`
 - issuer e audience esperados
 - `sub`, `role`, `exp`, `iat` validados
-- rejeição de tokens malformados, expostos ou alterados
+- rejeição de tokens malformados, expirados ou alterados
+- limite de 256 bytes no identificador de usuário, também na validação de claims em memória
 
 Importante:
 - nunca versionar segredos no repositório
@@ -42,10 +43,10 @@ Importante:
 
 ## Configuração
 
-Crie um arquivo `.env` ou defina a variável de ambiente antes de executar:
+Se utilizar o helper em outra aplicação, defina a variável de ambiente no ambiente de execução (um arquivo `.env` não é carregado automaticamente por Go):
 
 ```bash
-export JWT_SECRET="sua-chave-forte-com-pelo-menos-32-bytes"
+export JWT_SECRET="$(openssl rand -hex 32)"
 ```
 
 ## Executar
@@ -56,6 +57,8 @@ go run .
 ```
 
 ## Exemplo de uso
+
+Exemplo ilustrativo de integração com o helper; substitua a função `main` demonstrativa existente caso o execute neste mesmo pacote. O programa atual em `main.go` apenas imprime uma mensagem.
 
 ```go
 package main
@@ -103,20 +106,7 @@ Este projeto ainda não implementa:
 
 ## Estrutura do projeto
 
-```text
-.
-├── .gitignore
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-├── README.md
-├── main.go
-├── main_test.go
-├── go.mod
-├── .env.example
-├── Dockerfile
-└── VSCODE_SETUP.md
-```
+O projeto atual inclui `main.go`, `main_test.go`, `go.mod`, `.gitignore`, `README.md`, `VSCODE_SETUP.md` e o workflow em `.github/workflows/ci.yml`. Não há servidor HTTP, Dockerfile ou `.env.example` nesta versão.
 
 ## CI/CD
 
