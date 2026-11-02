@@ -16,6 +16,7 @@ const jwtAudience = "portfolio-api"
 const jwtLifetime = 24 * time.Hour
 const minimumSecretBytes = 32
 const maximumTokenBytes = 8 * 1024
+const maximumUserIDBytes = 256
 
 type TokenClaim struct {
 	UserID    string    `json:"user_id"`
@@ -49,6 +50,9 @@ func GenerateToken(userID string, role string) (TokenClaim, error) {
 	role = strings.ToLower(strings.TrimSpace(role))
 	if userID == "" {
 		return TokenClaim{}, errors.New("userID cannot be empty")
+	}
+	if len([]byte(userID)) > maximumUserIDBytes {
+		return TokenClaim{}, errors.New("userID exceeds maximum allowed size")
 	}
 	if role != "user" && role != "admin" {
 		return TokenClaim{}, errors.New("role must be either user or admin")
@@ -127,6 +131,7 @@ func VerifyJWT(token, secret string) (TokenClaim, error) {
 	}
 	now := time.Now().UTC().Unix()
 	if strings.TrimSpace(payload.Subject) == "" ||
+		len([]byte(payload.Subject)) > maximumUserIDBytes ||
 		(payload.Role != "user" && payload.Role != "admin") ||
 		payload.Issuer != jwtIssuer || payload.Audience != jwtAudience ||
 		payload.ExpiresAt <= now || payload.IssuedAt > now+60 ||
