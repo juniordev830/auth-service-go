@@ -168,19 +168,19 @@ func TestVerifyJWTRejectsInvalidSignedClaims(t *testing.T) {
 	}{
 		{
 			name:    "empty subject",
-			payload: `{"sub":" ","role":"user","exp":4102444800,"iat":` + fmt.Sprint(now) + `, "iss":"auth-service-go","aud":"portfolio-api"}`,
+			payload: `{"sub":" ","role":"user","exp":` + fmt.Sprint(now+3600) + `,"iat":` + fmt.Sprint(now) + `, "iss":"auth-service-go","aud":"portfolio-api"}`,
 		},
 		{
 			name:    "unsupported role",
-			payload: `{"sub":"usr_123","role":"root","exp":4102444800,"iat":` + fmt.Sprint(now) + `, "iss":"auth-service-go","aud":"portfolio-api"}`,
+			payload: `{"sub":"usr_123","role":"root","exp":` + fmt.Sprint(now+3600) + `,"iat":` + fmt.Sprint(now) + `, "iss":"auth-service-go","aud":"portfolio-api"}`,
 		},
 		{
 			name:    "wrong issuer",
-			payload: `{"sub":"usr_123","role":"user","exp":4102444800,"iat":` + fmt.Sprint(now) + `, "iss":"other-service","aud":"portfolio-api"}`,
+			payload: `{"sub":"usr_123","role":"user","exp":` + fmt.Sprint(now+3600) + `,"iat":` + fmt.Sprint(now) + `, "iss":"other-service","aud":"portfolio-api"}`,
 		},
 		{
 			name:    "wrong audience",
-			payload: `{"sub":"usr_123","role":"user","exp":4102444800,"iat":` + fmt.Sprint(now) + `, "iss":"auth-service-go","aud":"other-api"}`,
+			payload: `{"sub":"usr_123","role":"user","exp":` + fmt.Sprint(now+3600) + `,"iat":` + fmt.Sprint(now) + `, "iss":"auth-service-go","aud":"other-api"}`,
 		},
 		{
 			name:    "expiry not after issue time",
