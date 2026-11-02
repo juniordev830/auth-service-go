@@ -29,6 +29,7 @@ A biblioteca exige:
 - issuer e audience esperados
 - `sub`, `role`, `exp`, `iat` validados
 - rejeição de tokens malformados, expirados ou alterados
+- validação estrita de `sub` e `role`: os claims verificados devem ter formato canônico, sem espaços extras nem papéis com maiúsculas; a validação em memória também rejeita expiração muito distante
 - limite de 256 bytes no identificador de usuário, também na validação de claims em memória
 
 Importante:
