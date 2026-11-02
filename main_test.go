@@ -270,3 +270,14 @@ func TestVerifyJWTRejectsMalformedInputs(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateTokenRejectsOversizedUserID(t *testing.T) {
+	claim := TokenClaim{
+		UserID: strings.Repeat("u", maximumUserIDBytes+1),
+		Role: "user",
+		ExpiresAt: time.Now().Add(time.Hour),
+	}
+	if ValidateToken(claim) {
+		t.Fatal("expected oversized in-memory user ID to be invalid")
+	}
+}
