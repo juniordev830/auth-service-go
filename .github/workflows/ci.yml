@@ -16,7 +16,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version: stable
           cache: true
       - run: go test ./...
       - run: go vet ./...
+      - name: Scan Go code for known vulnerabilities
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
