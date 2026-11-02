@@ -131,6 +131,7 @@ func VerifyJWT(token, secret string) (TokenClaim, error) {
 	}
 	now := time.Now().UTC().Unix()
 	if strings.TrimSpace(payload.Subject) == "" ||
+		payload.Subject != strings.TrimSpace(payload.Subject) ||
 		len([]byte(payload.Subject)) > maximumUserIDBytes ||
 		(payload.Role != "user" && payload.Role != "admin") ||
 		payload.Issuer != jwtIssuer || payload.Audience != jwtAudience ||
@@ -147,14 +148,17 @@ func VerifyJWT(token, secret string) (TokenClaim, error) {
 
 // ValidateToken validates an in-memory claim only; it does not verify a JWT.
 func ValidateToken(claim TokenClaim) bool {
-	if strings.TrimSpace(claim.UserID) == "" || len([]byte(claim.UserID)) > maximumUserIDBytes {
+	// In-memory claims must have the same canonical format as signed claims.
+	// Never silently accept padded identifiers or privileged roles with whitespace.
+	if claim.UserID == "" || claim.UserID != strings.TrimSpace(claim.UserID) ||
+		len([]byte(claim.UserID)) > maximumUserIDBytes {
 		return false
 	}
-	role := strings.ToLower(strings.TrimSpace(claim.Role))
-	if role != "user" && role != "admin" {
+	if claim.Role != "user" && claim.Role != "admin" {
 		return false
 	}
-	return time.Now().Before(claim.ExpiresAt)
+	now := time.Now().UTC()
+	return claim.ExpiresAt.After(now) && !claim.ExpiresAt.After(now.Add(jwtLifetime+time.Minute))
 }
 
 func main() {

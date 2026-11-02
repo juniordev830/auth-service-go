@@ -281,3 +281,54 @@ func TestValidateTokenRejectsOversizedUserID(t *testing.T) {
 		t.Fatal("expected oversized in-memory user ID to be invalid")
 	}
 }
+
+
+func TestValidateTokenRejectsNoncanonicalClaims(t *testing.T) {
+	now := time.Now().UTC()
+	cases := []TokenClaim{
+		{UserID: " usr_123", Role: "admin", ExpiresAt: now.Add(time.Hour)},
+		{UserID: "usr_123 ", Role: "user", ExpiresAt: now.Add(time.Hour)},
+		{UserID: "usr_123", Role: " ADMIN ", ExpiresAt: now.Add(time.Hour)},
+		{UserID: "usr_123", Role: "Admin", ExpiresAt: now.Add(time.Hour)},
+		{UserID: "usr_123", Role: "admin", ExpiresAt: now.Add(72 * time.Hour)},
+	}
+	for _, claim := range cases {
+		if ValidateToken(claim) {
+			t.Fatalf("noncanonical claim must be rejected: %#v", claim)
+		}
+	}
+}
+
+func TestVerifyJWTRejectsSignedNoncanonicalSubject(t *testing.T) {
+	secret := "0123456789abcdef0123456789abcdef"
+	baseToken, err := GenerateJWT("usr_123", "user", secret)
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := strings.Split(baseToken, ".")
+	now := time.Now().UTC().Unix()
+	for _, subject := range []string{" usr_123", "usr_123 ", "  "} {
+		payload := fmt.Sprintf(
+			`{"sub":%q,"role":"user","exp":%d,"iat":%d,"iss":"auth-service-go","aud":"portfolio-api"}`,
+			subject, now+3600, now,
+		)
+		encodedPayload := base64.RawURLEncoding.EncodeToString([]byte(payload))
+		unsigned := parts[0] + "." + encodedPayload
+		mac := hmac.New(sha256.New, []byte(secret))
+		_, _ = mac.Write([]byte(unsigned))
+		signed := unsigned + "." + base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+		if _, err := VerifyJWT(signed, secret); err == nil {
+			t.Fatalf("noncanonical signed subject %q must be rejected", subject)
+		}
+	}
+}
+
+func TestValidateTokenAllowsCurrentCanonicalClaim(t *testing.T) {
+	claim, err := GenerateToken(" usr_123 ", " ADMIN ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ValidateToken(claim) {
+		t.Fatal("canonical generated claim should remain valid")
+	}
+}
