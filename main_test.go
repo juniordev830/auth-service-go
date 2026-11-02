@@ -206,3 +206,67 @@ func TestVerifyJWTRejectsInvalidSignedClaims(t *testing.T) {
 		})
 	}
 }
+
+
+func TestGenerateTokenRejectsOversizedUserID(t *testing.T) {
+	userID := strings.Repeat("u", maximumUserIDBytes+1)
+	if _, err := GenerateToken(userID, "user"); err == nil {
+		t.Fatal("expected oversized user ID to be rejected")
+	}
+}
+
+func TestGenerateTokenAcceptsMaximumUserIDLength(t *testing.T) {
+	userID := strings.Repeat("u", maximumUserIDBytes)
+	claim, err := GenerateToken(userID, "user")
+	if err != nil {
+		t.Fatalf("unexpected error for maximum-sized user ID: %v", err)
+	}
+	if claim.UserID != userID {
+		t.Fatal("user ID changed unexpectedly")
+	}
+}
+
+func TestVerifyJWTRejectsOversizedSubject(t *testing.T) {
+	secret := "0123456789abcdef0123456789abcdef"
+	token, err := GenerateJWT("usr_123", "user", secret)
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := strings.Split(token, ".")
+	payload := `{"sub":"` + strings.Repeat("u", maximumUserIDBytes+1) + `","role":"user","exp":4102444800,"iat":1,"iss":"auth-service-go","aud":"portfolio-api"}`
+	parts[1] = base64.RawURLEncoding.EncodeToString([]byte(payload))
+	unsigned := parts[0] + "." + parts[1]
+	mac := hmac.New(sha256.New, []byte(secret))
+	_, _ = mac.Write([]byte(unsigned))
+	parts[2] = base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+	if _, err := VerifyJWT(strings.Join(parts, "."), secret); err == nil {
+		t.Fatal("expected JWT with oversized subject to be rejected")
+	}
+}
+
+
+func TestVerifyJWTRejectsMalformedInputs(t *testing.T) {
+	secret := "0123456789abcdef0123456789abcdef"
+	tests := []struct {
+		name  string
+		token string
+	}{
+		{name: "missing segments", token: "only-one-segment"},
+		{name: "invalid header encoding", token: "%%% .e30.signature"},
+		{
+			name: "unsupported algorithm",
+			token: base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"none","typ":"JWT"}`)) + ".e30.signature",
+		},
+		{
+			name: "wrong token type",
+			token: base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"NOT-JWT"}`)) + ".e30.signature",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if _, err := VerifyJWT(test.token, secret); err == nil {
+				t.Fatal("expected malformed or unsupported JWT to be rejected")
+			}
+		})
+	}
+}
