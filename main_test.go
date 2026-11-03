@@ -10,6 +10,23 @@ import (
 	"time"
 )
 
+func TestTokenFingerprintIsStableWithoutExposingToken(t *testing.T) {
+	first, err := TokenFingerprint(" bearer-secret ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := TokenFingerprint("bearer-secret")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first != second || first == "bearer-secret" || len(first) == 0 {
+		t.Fatalf("unexpected fingerprint: %q %q", first, second)
+	}
+	if _, err := TokenFingerprint(" "); err == nil {
+		t.Fatal("expected empty token to be rejected")
+	}
+}
+
 func TestGenerateTokenSuccess(t *testing.T) {
 	token, err := GenerateToken("usr_123", "admin")
 	if err != nil {

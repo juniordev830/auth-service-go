@@ -62,6 +62,19 @@ func GenerateToken(userID string, role string) (TokenClaim, error) {
 
 // GenerateJWT creates a compact HS256 JWT. Callers must supply a secret from a
 // secret manager or environment variable; never commit production secrets.
+// TokenFingerprint creates a stable, non-reversible identifier for log correlation.
+func TokenFingerprint(token string) (string, error) {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return "", errors.New("token cannot be empty")
+	}
+	if len([]byte(token)) > maximumTokenBytes {
+		return "", errors.New("JWT exceeds maximum allowed size")
+	}
+	digest := sha256.Sum256([]byte(token))
+	return base64.RawURLEncoding.EncodeToString(digest[:]), nil
+}
+
 func GenerateJWT(userID, role, secret string) (string, error) {
 	if err := validateSecret(secret); err != nil {
 		return "", err
