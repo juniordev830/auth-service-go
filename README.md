@@ -87,6 +87,23 @@ func main() {
 }
 ```
 
+## Validação de cabeçalho HTTP Bearer
+
+O helper `VerifyAuthorizationHeader(valor, secret)` recebe **o valor de um único cabeçalho** `Authorization`, verifica o esquema `Bearer` (sem distinguir maiúsculas e minúsculas), rejeita espaços dentro do token e quebras de linha e, em seguida, chama `VerifyJWT` para validar a assinatura e as claims.
+
+Exemplo em um handler já existente:
+
+```go
+claim, err := VerifyAuthorizationHeader(r.Header.Get("Authorization"), secret)
+if err != nil {
+    http.Error(w, "unauthorized", http.StatusUnauthorized)
+    return
+}
+fmt.Println("authenticated user:", claim.UserID)
+```
+
+O exemplo acima pressupõe que `r`, `w` e `secret` já existam no handler; ele não constitui um servidor completo. **Antes de usar em produção, rejeite múltiplos cabeçalhos Authorization** com `len(r.Header.Values("Authorization")) != 1`, configure TLS e aplique autorização por recurso. Tokens não devem aparecer nos logs.
+
 ## Fluxo de autenticação
 
 1. o cliente envia credenciais para um endpoint de login
