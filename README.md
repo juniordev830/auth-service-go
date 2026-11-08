@@ -138,3 +138,24 @@ O repositório já conta com uma pipeline de CI para validar:
 João Junior
 
 GitHub: @juniordev830
+
+
+## Proteção HTTP com Bearer (novo)
+
+Além das funções de emissão/verificação de JWT, o projeto agora oferece **`NewBearerMiddleware`** para proteger um `http.Handler`. A configuração valida um segredo mínimo de 32 bytes e permite limitar o acesso aos papéis canônicos `user` e `admin`. Sem papéis informados, ambos são aceitos após verificar assinatura e claims.
+
+```go
+guard, err := NewBearerMiddleware(os.Getenv("JWT_SECRET"), "admin")
+if err != nil { log.Fatal(err) }
+
+private := guard(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    claim, ok := VerifiedClaim(r.Context())
+    if !ok { http.Error(w, "unauthorized", http.StatusUnauthorized); return }
+    fmt.Fprintln(w, "authenticated user:", claim.UserID)
+}))
+http.Handle("/admin", private)
+```
+
+**Comportamento de segurança:** cabeçalhos ausentes, repetidos ou malformados recebem HTTP **401** e desafio `WWW-Authenticate`; token válido sem papel permitido recebe **403**. Os tokens e segredos nunca são incluídos nas respostas. Os claims só são colocados no contexto após verificação de assinatura, expiração, emissor e audiência.
+
+Essa biblioteca **não implementa** banco de usuários, revogação, rate limiting, TLS, proteção CSRF ou renovação de JWT. Para uma implantação real, usar HTTPS, gerenciamento de segredos, logs sem tokens e uma estratégia para revogar credenciais comprometidas. Execute `go test ./...` para validar os novos testes com `httptest`.
