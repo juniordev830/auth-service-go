@@ -87,7 +87,7 @@ func TestMiddlewareRejectsMissingDuplicateAndMalformedAuthorization(t *testing.T
 func TestMiddlewareRejectsTamperedTokenAndWrongSecret(t *testing.T) {
 	token := signedJWT(t, "demo-user", "user")
 	handler := wrapForTest(t)
-	tampered := token[:len(token)-1] + "x"
+	tampered := token[:len(token)-1] + "!"
 	if response := serveAuth(t, handler, "Bearer "+tampered); response.Code != http.StatusUnauthorized {
 		t.Fatalf("tampered token accepted: %d", response.Code)
 	}
