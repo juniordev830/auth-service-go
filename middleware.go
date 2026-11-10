@@ -40,15 +40,7 @@ func NewBearerMiddleware(secret string, allowedRoles ...string) (func(http.Handl
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			values := r.Header.Values("Authorization")
-			// Multiple Authorization headers must never be silently merged,
-			// as intermediaries can interpret them differently.
-			if len(values) != 1 {
-				writeUnauthorized(w)
-				return
-			}
-
-			claim, err := VerifyAuthorizationHeader(values[0], secret)
+			claim, err := VerifyAuthorizationRequest(r, secret)
 			if err != nil {
 				writeUnauthorized(w)
 				return
@@ -69,3 +61,4 @@ func writeUnauthorized(w http.ResponseWriter) {
 	w.Header().Set("WWW-Authenticate", `Bearer realm="portfolio-api"`)
 	http.Error(w, "unauthorized", http.StatusUnauthorized)
 }
+

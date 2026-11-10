@@ -103,6 +103,18 @@ func TestMiddlewareRejectsTamperedTokenAndWrongSecret(t *testing.T) {
 	}
 }
 
+func TestMiddlewareRejectsDifferentlyCasedAuthorizationKeys(t *testing.T) {
+	token := signedJWT(t, "demo-user", "user")
+	request := httptest.NewRequest(http.MethodGet, "/private", nil)
+	request.Header["Authorization"] = []string{"Bearer " + token}
+	request.Header["authorization"] = []string{"Bearer " + token}
+	response := httptest.NewRecorder()
+	wrapForTest(t).ServeHTTP(response, request)
+	if response.Code != http.StatusUnauthorized {
+		t.Fatalf("duplicate authorization keys must be rejected: got %d", response.Code)
+	}
+}
+
 func TestMiddlewareReturns403ForValidButUnauthorizedRole(t *testing.T) {
 	token := signedJWT(t, "demo-user", "user")
 	response := serveAuth(t, wrapForTest(t, "admin"), "Bearer "+token)
@@ -134,3 +146,4 @@ func TestUnauthenticatedContextDoesNotClaimVerification(t *testing.T) {
 		t.Fatal("empty context must not be considered authenticated")
 	}
 }
+
