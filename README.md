@@ -159,3 +159,7 @@ http.Handle("/admin", private)
 **Comportamento de segurança:** cabeçalhos ausentes, repetidos ou malformados recebem HTTP **401** e desafio `WWW-Authenticate`; token válido sem papel permitido recebe **403**. Os tokens e segredos nunca são incluídos nas respostas. Os claims só são colocados no contexto após verificação de assinatura, expiração, emissor e audiência.
 
 Essa biblioteca **não implementa** banco de usuários, revogação, rate limiting, TLS, proteção CSRF ou renovação de JWT. Para uma implantação real, usar HTTPS, gerenciamento de segredos, logs sem tokens e uma estratégia para revogar credenciais comprometidas. Execute `go test ./...` para validar os novos testes com `httptest`.
+
+## Integração HTTP segura
+
+Para validar requisições HTTP, use `VerifyAuthorizationRequest(request, secret)` em vez de extrair diretamente `request.Header.Get("Authorization")`. O helper exige **exatamente um** cabeçalho de autorização, rejeita valores duplicados (inclusive chaves com capitalização diferente em objetos `http.Header` criados manualmente) e reutiliza a verificação JWT existente. Não oferece autenticação de usuários nem autorização por recurso; é uma rotina de validação de token de acesso.
