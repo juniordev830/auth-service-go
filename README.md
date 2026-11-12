@@ -163,3 +163,7 @@ Essa biblioteca **não implementa** banco de usuários, revogação, rate limiti
 ## Integração HTTP segura
 
 Para validar requisições HTTP, use `VerifyAuthorizationRequest(request, secret)` em vez de extrair diretamente `request.Header.Get("Authorization")`. O helper exige **exatamente um** cabeçalho de autorização, rejeita valores duplicados (inclusive chaves com capitalização diferente em objetos `http.Header` criados manualmente) e reutiliza a verificação JWT existente. Não oferece autenticação de usuários nem autorização por recurso; é uma rotina de validação de token de acesso.
+
+## Validação e manutenção
+
+Consulte o [guia técnico de validação](docs/GUIA_DE_VALIDACAO.md) antes de alterar o código: ele reúne os comandos, casos de regressão e limites atuais do projeto.
