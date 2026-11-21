@@ -167,3 +167,5 @@ Para validar requisições HTTP, use `VerifyAuthorizationRequest(request, secret
 ## Validação e manutenção
 
 Consulte o [guia técnico de validação](docs/GUIA_DE_VALIDACAO.md) antes de alterar o código: ele reúne os comandos, casos de regressão e limites atuais do projeto.
+
+`VerifiedClaim(nil)` retorna `(TokenClaim{}, false)` e não provoca panic; nenhum contexto ausente é interpretado como autenticado. Respostas 401 e 403 emitidas pelo middleware agora incluem `Cache-Control: no-store` e `X-Content-Type-Options: nosniff` para evitar armazenamento de erros de autorização em caches intermediários.
