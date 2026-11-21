@@ -50,6 +50,8 @@ func NewBearerMiddleware(secret string, allowedRoles ...string) (func(http.Handl
 			}
 			if len(allowed) > 0 {
 				if _, ok := allowed[claim.Role]; !ok {
+					w.Header().Set("Cache-Control", "no-store")
+					w.Header().Set("X-Content-Type-Options", "nosniff")
 					http.Error(w, "forbidden", http.StatusForbidden)
 					return
 				}
@@ -62,6 +64,8 @@ func NewBearerMiddleware(secret string, allowedRoles ...string) (func(http.Handl
 
 func writeUnauthorized(w http.ResponseWriter) {
 	w.Header().Set("WWW-Authenticate", `Bearer realm="portfolio-api"`)
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	http.Error(w, "unauthorized", http.StatusUnauthorized)
 }
 
