@@ -147,3 +147,10 @@ func TestUnauthenticatedContextDoesNotClaimVerification(t *testing.T) {
 	}
 }
 
+
+func TestVerifiedClaimNilContextNeverAuthenticates(t *testing.T) {
+    claim, ok := VerifiedClaim(nil)
+    if ok || claim.UserID != "" {
+        t.Fatalf("nil context must never supply verified identity: %+v %v", claim, ok)
+    }
+}
