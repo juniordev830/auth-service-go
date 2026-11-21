@@ -154,3 +154,18 @@ func TestVerifiedClaimNilContextNeverAuthenticates(t *testing.T) {
         t.Fatalf("nil context must never supply verified identity: %+v %v", claim, ok)
     }
 }
+
+func TestFailedAuthorizationResponsesCannotBeCached(t *testing.T) {
+    token := signedJWT(t, "demo-user", "user")
+    for name, response := range map[string]*httptest.ResponseRecorder{
+        "missing": serveAuth(t, wrapForTest(t, "user")),
+        "forbidden": serveAuth(t, wrapForTest(t, "admin"), "Bearer "+token),
+    } {
+        if response.Header().Get("Cache-Control") != "no-store" {
+            t.Fatalf("%s authentication failure can be cached", name)
+        }
+        if response.Header().Get("X-Content-Type-Options") != "nosniff" {
+            t.Fatalf("%s missing nosniff", name)
+        }
+    }
+}
