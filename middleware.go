@@ -13,6 +13,9 @@ type verifiedClaimKey struct{}
 // VerifiedClaim returns a JWT claim previously verified by the middleware.
 // A false result means authentication was not performed on this request.
 func VerifiedClaim(ctx context.Context) (TokenClaim, bool) {
+	if ctx == nil {
+		return TokenClaim{}, false
+	}
 	claim, ok := ctx.Value(verifiedClaimKey{}).(TokenClaim)
 	return claim, ok
 }
@@ -47,6 +50,8 @@ func NewBearerMiddleware(secret string, allowedRoles ...string) (func(http.Handl
 			}
 			if len(allowed) > 0 {
 				if _, ok := allowed[claim.Role]; !ok {
+					w.Header().Set("Cache-Control", "no-store")
+					w.Header().Set("X-Content-Type-Options", "nosniff")
 					http.Error(w, "forbidden", http.StatusForbidden)
 					return
 				}
@@ -59,6 +64,8 @@ func NewBearerMiddleware(secret string, allowedRoles ...string) (func(http.Handl
 
 func writeUnauthorized(w http.ResponseWriter) {
 	w.Header().Set("WWW-Authenticate", `Bearer realm="portfolio-api"`)
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	http.Error(w, "unauthorized", http.StatusUnauthorized)
 }
 
