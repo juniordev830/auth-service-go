@@ -13,6 +13,9 @@ type verifiedClaimKey struct{}
 // VerifiedClaim returns a JWT claim previously verified by the middleware.
 // A false result means authentication was not performed on this request.
 func VerifiedClaim(ctx context.Context) (TokenClaim, bool) {
+	if ctx == nil {
+		return TokenClaim{}, false
+	}
 	claim, ok := ctx.Value(verifiedClaimKey{}).(TokenClaim)
 	return claim, ok
 }
