@@ -1,0 +1,29 @@
+name: Segurança dos workflows
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+
+jobs:
+  auditar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verificar os workflows com zizmor
+        shell: bash
+        run: |
+          set -euo pipefail
+          ferramenta="$(mktemp -d)"
+          trap 'rm -rf "$ferramenta"' EXIT
+          curl --fail --silent --show-error --location --retry 2 \
+            'https://github.com/zizmorcore/zizmor/releases/download/v1.33.1/zizmor-x86_64-unknown-linux-gnu.tar.gz' -o "$ferramenta/zizmor.tar.gz"
+          echo "3e6a301c7a820a2501915f5a9de8c0486da82bdec7965f068477538a98743d43  $ferramenta/zizmor.tar.gz" | sha256sum --check --strict
+          tar -xzf "$ferramenta/zizmor.tar.gz" -C "$ferramenta" zizmor
+          "$ferramenta/zizmor" --offline --no-config --min-severity medium .github/workflows
