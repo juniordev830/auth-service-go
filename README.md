@@ -1,5 +1,7 @@
 # Auth Service Go
 
+**Navegação** · [Visão geral](#visão-geral) · [Arquitetura](#arquitetura) · [Segurança](#segurança) · [Código e estudo](docs/ENGENHARIA_REVERSA.md)
+
 Biblioteca educacional em Go para emitir e verificar JWTs HS256 com foco em segurança, validação de claims e legibilidade do código.
 
 ## Visão geral
@@ -169,3 +171,9 @@ Para validar requisições HTTP, use `VerifyAuthorizationRequest(request, secret
 Consulte o [guia técnico de validação](docs/GUIA_DE_VALIDACAO.md) antes de alterar o código: ele reúne os comandos, casos de regressão e limites atuais do projeto.
 
 `VerifiedClaim(nil)` retorna `(TokenClaim{}, false)` e não provoca panic; nenhum contexto ausente é interpretado como autenticado. Respostas 401 e 403 emitidas pelo middleware agora incluem `Cache-Control: no-store` e `X-Content-Type-Options: nosniff` para evitar armazenamento de erros de autorização em caches intermediários.
+
+## Código e roteiro de estudo
+
+Por que o código de negócio deve consumir as claims verificadas, após a validação do token? O [guia de engenharia reversa](docs/ENGENHARIA_REVERSA.md) reúne o mapa dos módulos e uma pergunta técnica baseada no projeto.
+
+Mantido por [João Junior](https://github.com/juniordev830).
